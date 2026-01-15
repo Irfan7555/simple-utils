@@ -1,0 +1,1 @@
+https://www.notion.so/Azure-DevOps-and-GCP-VM-CI-CD-2e94cd99263980cfb644c0c9056d8775?source=copy_link
