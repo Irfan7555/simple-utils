@@ -1,3 +1,5 @@
 .env
 .idea
 .venv
+jwt-auth/frontend/.next
+jwt-auth/frontend/node_modules

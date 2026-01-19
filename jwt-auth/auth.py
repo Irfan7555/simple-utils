@@ -5,7 +5,6 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, HT
 from jose import jwt, JWTError
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from starlette import status
 from database import SessionLocal
 from models import Users
 from passlib.context import CryptContext
@@ -22,6 +21,7 @@ router = APIRouter(
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
+REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 7))
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(
@@ -39,7 +39,13 @@ class CreateUserRequest(BaseModel):
 
 class Token(BaseModel):
     access_token: str
-    token_type: str
+    refresh_token: str
+    token_type: str = "bearer"
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
 
 def get_db():
     db = SessionLocal()
@@ -68,17 +74,71 @@ async def login_for_access_token(
     db: db_dependency
 ):
     user = authenticate_user(form_data.username, form_data.password, db)
-    if user is None:
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
         )
-    
 
-    access_token = create_access_token(user.username, user.id, timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES)))
-    return {"access_token": access_token, "token_type": "bearer"}
-    
+    access_token = create_access_token(
+        user.username,
+        user.id,
+        timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES))
+    )
+
+    refresh_token = create_refresh_token(
+        user.username,
+        user.id,
+        timedelta(days=int(REFRESH_TOKEN_EXPIRE_DAYS))
+    )
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer"
+    }
+
+
+
+@router.post("/refresh", response_model=Token)
+async def refresh_access_token(data: RefreshTokenRequest):
+    try:
+        payload = jwt.decode(
+            data.refresh_token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+
+        if payload.get("type") != "refresh":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token"
+            )
+
+        access_token = create_access_token(
+            payload["sub"],
+            payload["id"],
+            timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES))
+        )
+
+        refresh_token = create_refresh_token(
+            payload["sub"],
+            payload["id"],
+            timedelta(days=int(REFRESH_TOKEN_EXPIRE_DAYS))
+        )
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+        }
+
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token"
+        )
+
+
 
 
 def authenticate_user(username: str, password: str, db: Session):
@@ -88,17 +148,28 @@ def authenticate_user(username: str, password: str, db: Session):
     return user
 
 def create_access_token(username: str, user_id: int, expires_delta: timedelta):
-    encode = {'sub': username, 'id': user_id}
-    expire = datetime.utcnow() + expires_delta
-    encode.update({'exp': expire})
-    encoded_jwt = jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    payload = {
+        "sub": username,
+        "id": user_id,
+        "type": "access",
+        "exp": datetime.utcnow() + expires_delta
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
-security = HTTPBearer(
-    scheme_name="Enter your token",
-    auto_error=True
-)
+
+def create_refresh_token(username: str, user_id: int, expires_delta: timedelta):
+    payload = {
+        "sub": username,
+        "id": user_id,
+        "type": "refresh",
+        "exp": datetime.utcnow() + expires_delta
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+
+
+
 def get_current_user(
     oauth2_token: Optional[str] = Depends(oauth2_scheme),
     bearer_credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
