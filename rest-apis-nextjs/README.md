@@ -27,6 +27,7 @@ the  create page.tsx file
 
 create folder name with []
 
+```
 
 app/
 ├─ layout.tsx                 # Root layout (Navbar, Footer)
@@ -70,3 +71,44 @@ lib/
 ├─ api.ts                     # FastAPI calls (Axios / Fetch)
 ├─ auth.ts                    # Token helpers
 ├─ config.ts                  # Backend URLs
+
+```
+
+## Current Folder Structure
+
+```
+rest-apis-nextjs/
+├── app/
+│   ├── (auth)/             # Authentication Group (Login/Signup)
+│   │   ├── login/
+│   │   └── signup/
+│   ├── api/                # API Routes
+│   │   └── health/         # Health Check Endpoint
+│   ├── blogs/              # Application Routes
+│   │   ├── [slug]/         # Blog Detail Page
+│   │   └── page.tsx        # Blog List Page
+│   ├── components/         # Shared Components
+│   │   ├── ui/             # UI Library
+│   │   ├── Footer.tsx
+│   │   └── Navbar.tsx
+│   ├── dashboard/          # Dashboard (Protected)
+│   ├── lib/                # Utilities
+│   │   ├── api.ts          # API Client
+│   │   └── types.ts        # TypeScript Interfaces
+│   ├── globals.css         # Global Styles
+│   ├── layout.tsx          # Root Layout (Navbar + Footer)
+│   └── page.tsx            # Landing Page
+├── public/                 # Static Assets
+├── next.config.ts          # Next.js Configuration
+├── package.json            # Dependencies
+├── postcss.config.mjs      # Tailwind/PostCSS Config
+├── README.md               # Documentation
+└── tsconfig.json           # TypeScript Configuration
+```
+
+
+Command to show folder structure
+
+```
+tree /F /A
+```
