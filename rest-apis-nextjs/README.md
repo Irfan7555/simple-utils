@@ -1,78 +1,87 @@
-### Create Next Project
+# Next.js Project Setup & Structure
 
+## 1. Create Project
+To initialize the project, run the following command:
+
+```bash
 npx create-next-app@latest frontend
+```
 
-settings
+### Configuration Settings
+During setup, select the following options:
+- **Tailwind CSS**: `Yes`
+- **App Router**: `Yes`
+- **TypeScript**: `Yes`
+- **ESLint**: `No`
+- **Src Directory**: `No`
+- **Import Alias**: `No`
 
-Tailwind: YES
-App Router: YES
-TypeScript: YES
-ESLint: NO
-Src Directory: NO
-Import Alias: NO
+## 2. Dependencies
+Install additional required packages (e.g., Mongoose for MongoDB if needed):
 
-
-Adding paranthesis infront of folder excludes from API routes
-
+```bash
 npm install mongoose
-
-if using TypeScript
-the  create route.ts file
-
-if using TypeScript + JSX
-the  create page.tsx file
-
-
-## For Dynamic Folder
-
-create folder name with []
-
 ```
 
+## 3. Route Handlers vs Pages
+- **API Routes (TypeScript)**: Create a `route.ts` file inside the standard API folder structure.
+- **UI Pages (TypeScript + JSX)**: Create a `page.tsx` file for frontend views.
+
+## 4. Routing Concepts
+
+### Route Groups
+Adding parentheses around a folder name excludes it from the URL path.
+- Example: `(auth)` -> the URL will skip `auth` (e.g., `/login` instead of `/auth/login`).
+
+### Dynamic Routes
+Use square brackets `[]` for dynamic path segments.
+- Example: `blogs/[slug]/page.tsx` handles URLs like `/blogs/my-first-post`.
+
+### Project Structure Overview
+
+```bash
 app/
-├─ layout.tsx                 # Root layout (Navbar, Footer)
-├─ page.tsx                   # Home page
-├─ globals.css                # Tailwind styles
+├── layout.tsx                 # Root layout (Navbar, Footer)
+├── page.tsx                   # Home page
+├── globals.css                # Tailwind styles
 │
-├─ blogs/
-│  ├─ page.tsx                # /blogs (list)
-│  ├─ [slug]/
-│  │  └─ page.tsx             # /blogs/:slug
+├── blogs/
+│   ├── page.tsx               # /blogs (Listing)
+│   └── [slug]/
+│       └── page.tsx           # /blogs/:slug (Detail)
 │
-├─ auth/
-│  ├─ login/
-│  │  └─ page.tsx
-│  └─ register/
-│     └─ page.tsx
+├── (auth)/                    # Route Group (Hidden from URL)
+│   ├── login/
+│   │   └── page.tsx           # /login
+│   └── signup/
+│       └── page.tsx           # /signup
 │
-├─ dashboard/
-│  └─ page.tsx
+├── dashboard/
+│   └── page.tsx               # /dashboard (Protected)
 │
-├─ api/                       # OPTIONAL (Next.js route handlers)
-│  └─ health/
-│     └─ route.ts
+├── api/                       # API Route Handlers
+│   └── health/
+│       └── route.ts           # /api/health
 │
-├─ not-found.tsx              # Global 404
-├─ loading.tsx                # Global loading
-├─ error.tsx                  # Global error boundary
-
-
-
-📦 Frontend-Only Supporting Folders (Industry Standard)
-components/
-├─ ui/                        # Reusable UI components
-│  ├─ Button.tsx
-│  └─ Input.tsx
-├─ layout/
-│  ├─ Navbar.tsx
-│  └─ Footer.tsx
-
-lib/
-├─ api.ts                     # FastAPI calls (Axios / Fetch)
-├─ auth.ts                    # Token helpers
-├─ config.ts                  # Backend URLs
-
+├── not-found.tsx              # Global 404 Page
+├── loading.tsx                # Global Loading State
+└── error.tsx                  # Global Error Boundary
 ```
+
+### Frontend Architecture
+Industry standard organization for supporting files:
+
+#### Components
+`components/`
+- **ui/**: Reusable, atomic UI components (e.g., `Button.tsx`, `Input.tsx`).
+- **layout/**: Structural components (e.g., `Navbar.tsx`, `Footer.tsx`).
+
+#### Libraries
+`lib/`
+- **api.ts**: API client (Fetch/Axios) for backend communication.
+- **auth.ts**: Authentication helpers and token management.
+- **config.ts**: Configuration constants (e.g., Backend URLs).
+
 
 ## Current Folder Structure
 
