@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBlog } from '../lib/api';
+import { useAuth } from '../lib/useAuth';
 
 export default function Dashboard() {
   const [title, setTitle] = useState('');
@@ -10,6 +11,13 @@ export default function Dashboard() {
   const [published, setPublished] = useState(true);
   const [error, setError] = useState('');
   const router = useRouter();
+  const { isLoggedIn, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && !isLoggedIn) {
+      router.push('/login');
+    }
+  }, [isLoggedIn, isLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +33,21 @@ export default function Dashboard() {
       setError('You must be logged in to create a blog.');
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return null; // Will redirect in useEffect
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
