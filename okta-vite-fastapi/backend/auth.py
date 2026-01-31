@@ -22,18 +22,18 @@ class TokenExchangeRequest(BaseModel):
 async def exchange_code_for_token(request: TokenExchangeRequest):
     """
     Exchange authorization code for access token.
-    
+
     This endpoint receives the authorization code from the frontend
     and exchanges it with Okta using the client secret (confidential client).
-    
+
     IMPORTANT: redirect_uri must EXACTLY match what's configured in Okta.
-    
+
     SECURITY NOTE: This implementation returns raw access tokens to the frontend
     for simplicity. For production, consider:
     - Issuing your own session token instead
     - Using httpOnly cookies for token storage
     - Implementing token refresh logic on the backend
-    
+
     Returns the access token to the frontend for subsequent API calls.
     """
     try:
@@ -44,34 +44,57 @@ async def exchange_code_for_token(request: TokenExchangeRequest):
                 status_code=400,
                 detail="redirect_uri is required"
             )
-        
+
         # Exchange authorization code for tokens
+        print(f"🔍 Token Exchange Debug Info:")
+        print(f"  - Token Endpoint: {TOKEN_ENDPOINT}")
+        print(f"  - Client ID: {OKTA_CLIENT_ID}")
+        print(f"  - Redirect URI: {request.redirect_uri}")
+        print(f"  - Code (first 10 chars): {request.code[:10]}...")
+        print(f"  - Client Secret configured: {'Yes' if OKTA_CLIENT_SECRET else 'No'}")
+
         async with httpx.AsyncClient() as client:
+            token_data = {
+                "grant_type": "authorization_code",
+                "code": request.code,
+                "redirect_uri": request.redirect_uri,  # Must match Okta config
+                "client_id": OKTA_CLIENT_ID,
+                "client_secret": OKTA_CLIENT_SECRET,
+            }
+
             token_response = await client.post(
                 TOKEN_ENDPOINT,
-                data={
-                    "grant_type": "authorization_code",
-                    "code": request.code,
-                    "redirect_uri": request.redirect_uri,  # Must match Okta config
-                    "client_id": OKTA_CLIENT_ID,
-                    "client_secret": OKTA_CLIENT_SECRET,
-                },
+                data=token_data,
                 headers={"Content-Type": "application/x-www-form-urlencoded"},
             )
-            
+
+            print(f"📡 Okta Response Status: {token_response.status_code}")
+
             if token_response.status_code != 200:
+                error_detail = token_response.text
+                print(f"❌ Token Exchange Failed:")
+                print(f"  - Status: {token_response.status_code}")
+                print(f"  - Response: {error_detail}")
+
+                # Try to parse error details
+                try:
+                    error_json = token_response.json()
+                    error_msg = error_json.get('error_description', error_json.get('error', error_detail))
+                except:
+                    error_msg = error_detail
+
                 raise HTTPException(
                     status_code=token_response.status_code,
-                    detail=f"Token exchange failed: {token_response.text}"
+                    detail=f"Token exchange failed: {error_msg}"
                 )
-            
+
             tokens = token_response.json()
-        
+
         # Decode ID token to get user info (no signature verification needed here,
         # as we just received it directly from Okta)
         id_token = tokens.get("id_token")
         user_info = jwt.get_unverified_claims(id_token)
-        
+
         # Return tokens and user info to frontend
         # SECURITY: Consider not exposing raw tokens in production
         return {
@@ -85,7 +108,7 @@ async def exchange_code_for_token(request: TokenExchangeRequest):
                 "email": user_info.get("email"),
             }
         }
-        
+
     except httpx.HTTPError as e:
         raise HTTPException(
             status_code=500,
