@@ -4,9 +4,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 from middleware import get_current_user
+from auth import router as auth_router
 
 # Load environment variables
-load_dotenv(dotenv_path="../testenv")
+load_dotenv(dotenv_path="../.env")
 
 app = FastAPI(title="Okta Auth API - Resource Server")
 
@@ -19,6 +20,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include auth router
+app.include_router(auth_router)
 
 
 @app.get("/")

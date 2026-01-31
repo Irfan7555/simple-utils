@@ -7,5 +7,6 @@ export const oktaConfig = {
   issuer: ISSUER,
   redirectUri: REDIRECT_URI,
   scopes: ['openid', 'profile', 'email'],
-  pkce: true,
+  // PKCE not needed - backend exchanges code with client_secret
+  pkce: false,
 };

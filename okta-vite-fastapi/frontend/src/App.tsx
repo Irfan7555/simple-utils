@@ -1,7 +1,6 @@
-import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
-import { OktaAuth, toRelativeUrl } from '@okta/okta-auth-js';
-import { Security, LoginCallback, useOktaAuth } from '@okta/okta-react';
+import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { OktaAuth } from '@okta/okta-auth-js';
 import { oktaConfig } from './config';
 import { api } from './api';
 import './App.css';
@@ -11,54 +10,118 @@ const oktaAuth = new OktaAuth(oktaConfig);
 function App() {
   return (
     <Router>
-      <AppWithRouter />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/auth" element={<AuthCallback />} />
+      </Routes>
     </Router>
   );
 }
 
-function AppWithRouter() {
+// Custom callback handler - intercepts authorization code
+function AuthCallback() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [error, setError] = useState<string | null>(null);
 
-  const restoreOriginalUri = async (_oktaAuth: OktaAuth, originalUri: string) => {
-    navigate(toRelativeUrl(originalUri || '/', window.location.origin), { replace: true });
-  };
+  useEffect(() => {
+    const handleCallback = async () => {
+      try {
+        // Extract authorization code from URL
+        const searchParams = new URLSearchParams(location.search);
+        const code = searchParams.get('code');
+        const state = searchParams.get('state');
+
+        if (!code) {
+          throw new Error('No authorization code found in URL');
+        }
+
+        // Send code to backend for token exchange
+        const tokenData = await api.exchangeCodeForToken(code, oktaConfig.redirectUri);
+
+        // Store tokens in localStorage
+        localStorage.setItem('access_token', tokenData.access_token);
+        localStorage.setItem('id_token', tokenData.id_token);
+        localStorage.setItem('user', JSON.stringify(tokenData.user));
+
+        // Redirect to home
+        navigate('/', { replace: true });
+      } catch (err) {
+        console.error('Token exchange error:', err);
+        setError(err instanceof Error ? err.message : 'Token exchange failed');
+      }
+    };
+
+    handleCallback();
+  }, [location, navigate]);
+
+  if (error) {
+    return (
+      <div className="container">
+        <div className="card">
+          <h2>Authentication Error</h2>
+          <p style={{ color: 'red' }}>{error}</p>
+          <button onClick={() => navigate('/')} className="btn">
+            Go Home
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Security oktaAuth={oktaAuth} restoreOriginalUri={restoreOriginalUri}>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/auth" element={<LoginCallback />} />
-      </Routes>
-    </Security>
+    <div className="container">
+      <div className="card">
+        <p>Processing authentication...</p>
+      </div>
+    </div>
   );
 }
 
 function Home() {
-  const { oktaAuth, authState } = useOktaAuth();
+  const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [protectedData, setProtectedData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    // Check if user is already authenticated
+    const storedToken = localStorage.getItem('access_token');
+    const storedUser = localStorage.getItem('user');
+
+    if (storedToken && storedUser) {
+      setAccessToken(storedToken);
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
   const login = async () => {
+    // Redirect to Okta for authorization code
     await oktaAuth.signInWithRedirect();
   };
 
-  const logout = async () => {
-    await oktaAuth.signOut();
+  const logout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('id_token');
+    localStorage.removeItem('user');
+    setUser(null);
+    setAccessToken(null);
     setProtectedData(null);
   };
 
   const fetchProtectedData = async () => {
-    if (!authState?.accessToken) {
+    if (!accessToken) {
       setError('No access token available');
       return;
     }
 
     setLoading(true);
     setError(null);
-    
+
     try {
-      const data = await api.fetchProtectedData(authState.accessToken.accessToken);
+      const data = await api.fetchProtectedData(accessToken);
       setProtectedData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch data');
@@ -67,20 +130,16 @@ function Home() {
     }
   };
 
-  if (!authState) {
-    return <div className="container">Loading...</div>;
-  }
-
   return (
     <div className="container">
       <div className="card">
         <h1>🔐 Okta Authentication</h1>
-        
-        {authState.isAuthenticated ? (
+
+        {user ? (
           <div>
-            <p className="welcome">Welcome, <strong>{authState.idToken?.claims.name}</strong>!</p>
-            <p className="email">{authState.idToken?.claims.email}</p>
-            
+            <p className="welcome">Welcome, <strong>{user.name}</strong>!</p>
+            <p className="email">{user.email}</p>
+
             <div style={{ marginTop: '20px' }}>
               <button onClick={fetchProtectedData} className="btn" disabled={loading}>
                 {loading ? 'Loading...' : 'Fetch Protected Data'}
