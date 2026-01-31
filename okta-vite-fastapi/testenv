@@ -1,0 +1,13 @@
+# Frontend Okta Configuration
+VITE_ISSUER=https://your-okta-domain.oktapreview.com/oauth2/default
+VITE_CLIENT_ID=your_client_id_here
+
+# Backend Token Validation
+OKTA_ISSUER=https://your-okta-domain.oktapreview.com/oauth2/default
+OKTA_AUDIENCE=api://default
+
+# Application URLs
+FRONTEND_URL=http://localhost:8000
+BACKEND_URL=http://localhost:8001
+FRONTEND_PORT=8000
+BACKEND_PORT=8001
