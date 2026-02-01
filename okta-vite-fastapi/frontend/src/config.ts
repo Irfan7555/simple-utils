@@ -1,6 +1,7 @@
-const CLIENT_ID = '0oazq0ngiljkVdkf5697';
-const ISSUER = 'https://trial-7255425.okta.com/oauth2/default';
-const REDIRECT_URI = 'http://localhost:8000/auth';
+// Load from environment variables (Vite uses import.meta.env with VITE_ prefix)
+const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
+const ISSUER = import.meta.env.VITE_ISSUER;
+const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI || 'http://localhost:8000/auth';
 
 export const oktaConfig = {
   clientId: CLIENT_ID,
