@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
@@ -6,8 +7,9 @@ from dotenv import load_dotenv
 from middleware import get_current_user
 from auth import router as auth_router
 
-# Load environment variables
-load_dotenv(dotenv_path="../.env")
+# Load environment variables from parent directory
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(env_path)
 
 app = FastAPI(title="Okta Auth API - Resource Server")
 
@@ -55,3 +57,8 @@ async def protected_route(user: dict = Depends(get_current_user)):
         },
         "data": "This is protected data from the backend"
     }
+
+
+@app.get("/api/test")
+def test_route(user: dict = Depends(get_current_user)):
+    return {"message": "Hello World"}

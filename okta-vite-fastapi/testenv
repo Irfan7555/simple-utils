@@ -1,9 +1,11 @@
-# Frontend Okta Configuration
-VITE_ISSUER=https://your-okta-domain.oktapreview.com/oauth2/default
+ Frontend Okta Configuration
+VITE_ISSUER=https://trial-7255425.okta.com/oauth2/default
 VITE_CLIENT_ID=your_client_id_here
 
-# Backend Token Validation
-OKTA_ISSUER=https://your-okta-domain.oktapreview.com/oauth2/default
+# Backend Token Exchange (Confidential Client)
+OKTA_ISSUER=https://trial-7255425.okta.com/oauth2/default
+OKTA_CLIENT_ID=0oazq0ngiljkVdkf5697
+OKTA_CLIENT_SECRET=M5im45hoNRmn7sD7SaCGxlk2YLMl-1MLCosktFQqm8TlrGU0qPgm9w_LXKxxzr0h
 OKTA_AUDIENCE=api://default
 
 # Application URLs

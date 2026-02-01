@@ -1,8 +1,14 @@
 import os
+from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import httpx
 from jose import jwt
+from dotenv import load_dotenv
+
+# Load environment variables from parent directory
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(env_path)
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 

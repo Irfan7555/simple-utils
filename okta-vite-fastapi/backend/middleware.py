@@ -1,10 +1,16 @@
 import os
+from pathlib import Path
 from typing import Dict, Any, Optional
 from fastapi import HTTPException, Request
 from jose import jwt, JWTError, jwk
 from jose.utils import base64url_decode
 import httpx
 import json
+from dotenv import load_dotenv
+
+# Load environment variables from parent directory
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(env_path)
 
 # Load Okta configuration
 OKTA_ISSUER = os.getenv("OKTA_ISSUER")
@@ -79,12 +85,23 @@ async def verify_access_token(token: str) -> Dict[str, Any]:
         return claims
         
     except JWTError as e:
+        # Debug: print the unverified claims to see what's in the token
+        try:
+            unverified_claims = jwt.get_unverified_claims(token)
+            print(f"❌ JWT Validation Error: {str(e)}")
+            print(f"   Token issuer: {unverified_claims.get('iss')}")
+            print(f"   Token audience: {unverified_claims.get('aud')}")
+            print(f"   Expected issuer: {OKTA_ISSUER}")
+            print(f"   Expected audience: {OKTA_AUDIENCE}")
+        except:
+            pass
         raise HTTPException(
             status_code=401,
             detail=f"Invalid token: {str(e)}",
             headers={"WWW-Authenticate": "Bearer"},
         )
     except Exception as e:
+        print(f"❌ Token validation error: {str(e)}")
         raise HTTPException(
             status_code=401,
             detail=f"Token validation failed: {str(e)}",

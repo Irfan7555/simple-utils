@@ -23,19 +23,35 @@ function AuthCallback() {
   const navigate = useNavigate();
   const location = useLocation();
   const [error, setError] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
+    // Prevent double execution in StrictMode
+    if (processing) return;
+
     const handleCallback = async () => {
+      // Extract authorization code from URL
+      const searchParams = new URLSearchParams(location.search);
+      const code = searchParams.get('code');
+
+      // Check for Okta error response first
+      const oktaError = searchParams.get('error');
+      const errorDescription = searchParams.get('error_description');
+      if (oktaError) {
+        setError(`Okta error: ${oktaError} - ${errorDescription || 'No description'}`);
+        return;
+      }
+
+      // If no code and no error, user navigated here directly - redirect home
+      if (!code) {
+        console.log('No authorization code in URL, redirecting to home');
+        navigate('/', { replace: true });
+        return;
+      }
+
+      setProcessing(true);
+
       try {
-        // Extract authorization code from URL
-        const searchParams = new URLSearchParams(location.search);
-        const code = searchParams.get('code');
-        const state = searchParams.get('state');
-
-        if (!code) {
-          throw new Error('No authorization code found in URL');
-        }
-
         // Send code to backend for token exchange
         const tokenData = await api.exchangeCodeForToken(code, oktaConfig.redirectUri);
 
@@ -49,11 +65,12 @@ function AuthCallback() {
       } catch (err) {
         console.error('Token exchange error:', err);
         setError(err instanceof Error ? err.message : 'Token exchange failed');
+        setProcessing(false);
       }
     };
 
     handleCallback();
-  }, [location, navigate]);
+  }, [location, navigate, processing]);
 
   if (error) {
     return (

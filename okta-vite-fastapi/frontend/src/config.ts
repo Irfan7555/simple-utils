@@ -1,12 +1,14 @@
-const CLIENT_ID = import.meta.env.VITE_CLIENT_ID || '';
-const ISSUER = import.meta.env.VITE_ISSUER || '';
-const REDIRECT_URI = `${window.location.origin}/auth`;
+const CLIENT_ID = '0oazq0ngiljkVdkf5697';
+const ISSUER = 'https://trial-7255425.okta.com/oauth2/default';
+const REDIRECT_URI = 'http://localhost:8000/auth';
 
 export const oktaConfig = {
   clientId: CLIENT_ID,
   issuer: ISSUER,
   redirectUri: REDIRECT_URI,
   scopes: ['openid', 'profile', 'email'],
-  // PKCE not needed - backend exchanges code with client_secret
+  // Authorization Code flow - backend exchanges code with client_secret
   pkce: false,
+  responseType: 'code',
 };
+
