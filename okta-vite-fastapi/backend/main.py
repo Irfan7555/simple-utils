@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer
 from dotenv import load_dotenv
 
 from middleware import get_current_user
@@ -11,7 +12,16 @@ from auth import router as auth_router
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(env_path)
 
-app = FastAPI(title="Okta Auth API - Resource Server")
+# Security scheme for Swagger UI
+security_scheme = HTTPBearer()
+
+app = FastAPI(
+    title="Okta Auth API - Resource Server",
+    swagger_ui_init_oauth={
+        "clientId": os.getenv("OKTA_CLIENT_ID"),
+        "usePkceWithAuthorizationCodeGrant": True,
+    }
+)
 
 # CORS configuration for frontend on port 8000
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:8000")
@@ -42,11 +52,13 @@ def health_check():
     return {"status": "healthy"}
 
 
-@app.get("/api/protected")
+@app.get("/api/protected", dependencies=[Depends(security_scheme)])
 async def protected_route(user: dict = Depends(get_current_user)):
     """
     Protected route - requires valid Okta access token.
     The get_current_user dependency validates the JWT token.
+
+    Click the 'Authorize' button and paste your access token.
     """
     return {
         "message": f"Hello! You are authenticated.",
@@ -59,6 +71,7 @@ async def protected_route(user: dict = Depends(get_current_user)):
     }
 
 
-@app.get("/api/test")
+@app.get("/api/test", dependencies=[Depends(security_scheme)])
 def test_route(user: dict = Depends(get_current_user)):
+    """Test route - requires valid Okta access token."""
     return {"message": "Hello World"}

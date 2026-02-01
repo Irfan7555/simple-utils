@@ -1,0 +1,5 @@
+# Allowed users - only these users can access protected APIs after Okta login
+# Add users by their email (the 'sub' claim from Okta)
+
+allowed_users:
+  - irfan@abc.com

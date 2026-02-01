@@ -1,11 +1,12 @@
 import os
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from fastapi import HTTPException, Request
 from jose import jwt, JWTError, jwk
 from jose.utils import base64url_decode
 import httpx
 import json
+import yaml
 from dotenv import load_dotenv
 
 # Load environment variables from parent directory
@@ -18,6 +19,29 @@ OKTA_AUDIENCE = os.getenv("OKTA_AUDIENCE", "api://default")
 
 # Cache for JWKS
 _jwks_cache: Optional[Dict] = None
+
+# Settings file path
+SETTINGS_PATH = Path(__file__).parent / "settings.yml"
+
+
+def load_allowed_users() -> List[str]:
+    """Load allowed users from settings.yml"""
+    try:
+        with open(SETTINGS_PATH, 'r') as f:
+            settings = yaml.safe_load(f)
+            return settings.get('allowed_users', [])
+    except FileNotFoundError:
+        print(f"⚠️ Settings file not found: {SETTINGS_PATH}")
+        return []
+    except Exception as e:
+        print(f"⚠️ Error loading settings: {e}")
+        return []
+
+
+def is_user_allowed(user_id: str) -> bool:
+    """Check if user is in the allowed users list"""
+    allowed_users = load_allowed_users()
+    return user_id in allowed_users
 
 
 async def get_jwks() -> Dict:
@@ -138,7 +162,17 @@ async def get_current_user(request: Request) -> Dict[str, Any]:
         )
     
     token = parts[1]
-    
+
     # Verify token and return claims
     claims = await verify_access_token(token)
+
+    # Check if user is in allowed users list
+    user_id = claims.get("sub")
+    if not is_user_allowed(user_id):
+        print(f"🚫 Access denied for user: {user_id}")
+        raise HTTPException(
+            status_code=403,
+            detail=f"Access denied. User '{user_id}' is not authorized to access this resource.",
+        )
+
     return claims
