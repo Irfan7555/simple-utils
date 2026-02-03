@@ -63,9 +63,6 @@ function Login() {
               <button onClick={handleFetchProtectedData} className="btn" disabled={loading}>
                 {loading ? 'Loading...' : 'Fetch Protected Data'}
               </button>
-              <button onClick={logout} className="btn" style={{ marginLeft: '10px' }}>
-                Logout
-              </button>
             </div>
 
             {error && (

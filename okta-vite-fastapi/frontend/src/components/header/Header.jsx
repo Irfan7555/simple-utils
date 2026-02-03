@@ -1,11 +1,18 @@
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { logout } from '../agent/agentService';
 
 export default function Header() {
+    const location = useLocation();
+    const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('access_token'));
+
+    useEffect(() => {
+        setIsLoggedIn(!!localStorage.getItem('access_token'));
+    }, [location]);
+
     const handleLogout = () => {
         logout();
     };
-
-    const isLoggedIn = !!localStorage.getItem('access_token');
 
     return (
         <header className="header" style={{
