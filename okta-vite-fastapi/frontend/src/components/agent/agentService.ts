@@ -1,0 +1,74 @@
+import axios from "axios";
+
+const BACKEND_URL = "http://localhost:8001";
+
+const api = axios.create({
+    baseURL: BACKEND_URL,
+});
+
+export const exchangeCodeForToken = async (
+    code: string,
+    redirectUri: string
+) => {
+    try {
+        const response = await api.post(
+            "/auth/callback",
+            {
+                code,
+                redirect_uri: redirectUri,
+            },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+
+        return response.data;
+    } catch (error) {
+        let message = "Unknown error";
+        if (axios.isAxiosError(error)) {
+            const data = error.response?.data;
+            if (typeof data === 'object' && data !== null) {
+                message = data.error_description || data.message || data.error || JSON.stringify(data);
+            } else {
+                message = data || error.message;
+            }
+        } else if (error instanceof Error) {
+            message = error.message;
+        }
+        throw new Error(`Token exchange failed: ${message}`);
+    }
+};
+
+export const fetchProtectedData = async (accessToken: string) => {
+    try {
+        const response = await api.get("/api/protected", {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json",
+            },
+        });
+        return response.data;
+    } catch (error) {
+        let message = "Unknown error";
+        if (axios.isAxiosError(error)) {
+            const data = error.response?.data;
+            if (typeof data === 'object' && data !== null) {
+                message = data.message || data.error || JSON.stringify(data);
+            } else {
+                message = data || error.message;
+            }
+        } else if (error instanceof Error) {
+            message = error.message;
+        }
+        throw new Error(`Failed to fetch protected data: ${message}`);
+    }
+};
+
+export const logout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("id_token");
+    localStorage.removeItem("user");
+    window.location.href = "/";
+};

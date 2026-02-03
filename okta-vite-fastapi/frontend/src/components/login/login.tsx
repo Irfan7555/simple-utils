@@ -1,0 +1,97 @@
+import { useState, useEffect } from 'react';
+import { OktaAuth } from '@okta/okta-auth-js';
+import { oktaConfig } from '../../config';
+import { fetchProtectedData, logout } from '../agent/agentService';
+
+interface User {
+  name: string;
+  email: string;
+}
+
+const oktaAuth = new OktaAuth(oktaConfig);
+
+function Login() {
+  const [user, setUser] = useState<User | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [protectedData, setProtectedData] = useState<Record<string, unknown> | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check if user is already authenticated
+    const storedToken = localStorage.getItem('access_token');
+    const storedUser = localStorage.getItem('user');
+
+    if (storedToken && storedUser) {
+      setAccessToken(storedToken);
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const login = async () => {
+    // Redirect to Okta for authorization code
+    await oktaAuth.signInWithRedirect();
+  };
+
+
+  const handleFetchProtectedData = async () => {
+    if (!accessToken) {
+      setError('No access token available');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await fetchProtectedData(accessToken);
+      setProtectedData(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="container">
+      <div className="card">
+        <h1>🔐 Okta Authentication</h1>
+
+        {user ? (
+          <div>
+            <p className="welcome">Welcome, <strong>{user.name}</strong>!</p>
+            <p className="email">{user.email}</p>
+
+            <div style={{ marginTop: '20px' }}>
+              <button onClick={handleFetchProtectedData} className="btn" disabled={loading}>
+                {loading ? 'Loading...' : 'Fetch Protected Data'}
+              </button>
+              <button onClick={logout} className="btn" style={{ marginLeft: '10px' }}>
+                Logout
+              </button>
+            </div>
+
+            {error && (
+              <p style={{ color: 'red', marginTop: '10px' }}>Error: {error}</p>
+            )}
+
+            {protectedData && (
+              <div style={{ marginTop: '20px', textAlign: 'left', background: '#f5f5f5', padding: '15px', borderRadius: '5px' }}>
+                <h3>Protected Data from Backend:</h3>
+                <pre>{JSON.stringify(protectedData, null, 2)}</pre>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            <p className="description">Click to authenticate with Okta</p>
+            <button onClick={login} className="btn">Login</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default Login;
