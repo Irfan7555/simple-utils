@@ -3,19 +3,15 @@ import { OktaAuth } from '@okta/okta-auth-js';
 import { oktaConfig } from '../../config';
 import { fetchProtectedData, logout } from '../agent/agentService';
 
-interface User {
-  name: string;
-  email: string;
-}
 
 const oktaAuth = new OktaAuth(oktaConfig);
 
 function Login() {
-  const [user, setUser] = useState<User | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [protectedData, setProtectedData] = useState<Record<string, unknown> | null>(null);
+  const [user, setUser] = useState(null);
+  const [accessToken, setAccessToken] = useState(null);
+  const [protectedData, setProtectedData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     // Check if user is already authenticated

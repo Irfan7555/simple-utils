@@ -6,7 +6,7 @@ import { exchangeCodeForToken } from '../agent/agentService';
 function AuthCallback() {
     const navigate = useNavigate();
     const location = useLocation();
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState(null);
     const [processing, setProcessing] = useState(false);
     const hasCalled = useRef(false);
 
@@ -50,7 +50,7 @@ function AuthCallback() {
                 navigate('/', { replace: true });
             } catch (err) {
                 console.error('Token exchange error:', err);
-                setError(err instanceof Error ? err.message : 'Token exchange failed');
+                setError(err.message || 'Token exchange failed');
                 setProcessing(false);
             }
         };
