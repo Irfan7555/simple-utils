@@ -7,8 +7,8 @@ const api = axios.create({
 });
 
 export const exchangeCodeForToken = async (
-    code: string,
-    redirectUri: string
+    code,
+    redirectUri
 ) => {
     try {
         const response = await api.post(
@@ -34,14 +34,14 @@ export const exchangeCodeForToken = async (
             } else {
                 message = data || error.message;
             }
-        } else if (error instanceof Error) {
+        } else if (error.message) {
             message = error.message;
         }
         throw new Error(`Token exchange failed: ${message}`);
     }
 };
 
-export const fetchProtectedData = async (accessToken: string) => {
+export const fetchProtectedData = async (accessToken) => {
     try {
         const response = await api.get("/api/protected", {
             headers: {
@@ -59,7 +59,7 @@ export const fetchProtectedData = async (accessToken: string) => {
             } else {
                 message = data || error.message;
             }
-        } else if (error instanceof Error) {
+        } else if (error.message) {
             message = error.message;
         }
         throw new Error(`Failed to fetch protected data: ${message}`);
