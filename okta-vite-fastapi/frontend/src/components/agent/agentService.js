@@ -72,3 +72,15 @@ export const logout = () => {
     localStorage.removeItem("user");
     window.location.href = "/";
 };
+
+export const getAuthData = () => {
+    const accessToken = localStorage.getItem('access_token');
+    const userString = localStorage.getItem('user');
+    const user = userString ? JSON.parse(userString) : null;
+    
+    return {
+        accessToken,
+        user,
+        isAuthenticated: !!accessToken,
+    };
+};

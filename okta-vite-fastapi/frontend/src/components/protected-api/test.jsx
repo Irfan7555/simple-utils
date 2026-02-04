@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchProtectedData } from '../agent/agentService';
+import { fetchProtectedData, getAuthData } from '../agent/agentService';
 
 export default function Test() {
   const [user, setUser] = useState(null);
@@ -10,16 +10,9 @@ export default function Test() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Check if user is already authenticated
-    const storedToken = localStorage.getItem('access_token');
-    const storedUser = localStorage.getItem('user');
-    
-    if (storedToken) {
-      setAccessToken(storedToken);
-    }
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const { accessToken, user } = getAuthData();
+    setAccessToken(accessToken);
+    setUser(user);
   }, []);
 
   const callTestApi = async () => {
