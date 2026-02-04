@@ -52,29 +52,12 @@ function Login() {
   return (
     <div className="container">
       <div className="card">
-        <h1>🔐 Okta Authentication</h1>
-
         {user ? (
           <div>
-            <p className="welcome">Welcome, <strong>{user.name}</strong>!</p>
-            <p className="email">{user.email}</p>
-
-            <div style={{ marginTop: '20px' }}>
-              <button onClick={handleFetchProtectedData} className="btn" disabled={loading}>
-                {loading ? 'Loading...' : 'Fetch Protected Data'}
-              </button>
-            </div>
-
-            {error && (
-              <p style={{ color: 'red', marginTop: '10px' }}>Error: {error}</p>
-            )}
-
-            {protectedData && (
-              <div style={{ marginTop: '20px', textAlign: 'left', background: '#f5f5f5', padding: '15px', borderRadius: '5px' }}>
-                <h3>Protected Data from Backend:</h3>
-                <pre>{JSON.stringify(protectedData, null, 2)}</pre>
-              </div>
-            )}
+            <p className="description">You are already logged in</p>
+            <button onClick={() => window.location.href = '/test'} className="btn">
+              Go to Test Page
+            </button>
           </div>
         ) : (
           <div>

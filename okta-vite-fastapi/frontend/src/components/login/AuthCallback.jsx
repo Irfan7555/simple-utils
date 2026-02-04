@@ -46,8 +46,8 @@ function AuthCallback() {
                 localStorage.setItem('id_token', tokenData.id_token);
                 localStorage.setItem('user', JSON.stringify(tokenData.user));
 
-                // Redirect to home
-                navigate('/', { replace: true });
+                // Redirect to test page
+                navigate('/test', { replace: true });
             } catch (err) {
                 console.error('Token exchange error:', err);
                 setError(err.message || 'Token exchange failed');
